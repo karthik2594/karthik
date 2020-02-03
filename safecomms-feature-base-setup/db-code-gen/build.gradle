@@ -1,0 +1,47 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		classpath 'org.jooq:jooq-codegen:3.11.11'
+		classpath 'org.postgresql:postgresql:42.2.5'
+		classpath 'org.glassfish.jaxb:jaxb-runtime:2.3.2'
+	}
+}
+
+import org.jooq.codegen.GenerationTool
+
+task codeGen {
+	doLast {
+		def writer = new StringWriter()
+		println 'Module: ' + project.property('moduleName')
+		println 'Database: ' + project.property('databaseName')
+		println 'Generating jOOQ code.'
+		def xml = new groovy.xml.MarkupBuilder(writer)
+				.configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.11.0.xsd') {
+					jdbc() {
+						driver('org.postgresql.Driver')
+						url('jdbc:postgresql://' + System.getenv('DB_HOST') + '/' + project.property('databaseName').toString() + '?currentSchema=public')
+						user('postgres')
+						password(System.getenv('DB_PASSWORD'))
+					}
+					generator() {
+						database() {
+							inputSchema('public')
+							excludes('flyway_schema_history')
+						}
+						generate([:]) {
+							pojos true
+							daos true
+						}
+						target() {
+							packageName('com.onedata.safecomms.' + project.property('moduleName').toString().replace('-', '') + '.models')
+							directory('../' + project.property('moduleName').toString() + '/src/main/java')
+						}
+					}
+				}
+		GenerationTool.generate(writer.toString())
+		println 'jOOQ code generated successfully.'
+	}
+}

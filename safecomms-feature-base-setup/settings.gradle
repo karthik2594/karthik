@@ -1,0 +1,7 @@
+rootProject.name = 'SafeComms'
+
+include 'configuration-server',
+        'service-discovery-agent',
+        'api-gateway',
+        'user-management',
+        'db-code-gen'
